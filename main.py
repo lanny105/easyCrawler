@@ -29,6 +29,7 @@ def getContent(URLlist):
     eventType = "Anime"
 
     for url in URLlist:
+        dup = False
         html = getHtml(url)
         soup = BeautifulSoup(html, "html.parser")
         tag = soup.find_all('table')[1]
@@ -79,16 +80,19 @@ def getContent(URLlist):
 
 
         if record.keys() == []:
-            record[name] = eventStartDate
+            record[name.lower()] = eventStartDate
         else :
 
             for key in record.keys():
                 if (key.find(name.lower()) != -1 or name.lower().find(key)!= -1) and record[key] == eventStartDate:
                     print "duplicates!", name, eventStartDate
-                    continue
-                else:
-                    record[name.lower()] = eventStartDate
+                    dup = True
+                    break
 
+        if dup:
+            continue
+
+        record[name.lower()] = eventStartDate
         writer.writerow([name,eventVenue,eventCity,eventState,country,eventStartDate,eventEndDate,latitude,longitude,advanceRates,atDoorRates,link\
                          ,registerLink,eventDescription,eventType])
 
@@ -108,6 +112,7 @@ def getContent2(URLlist):
     eventType = "Comic"
 
     for url in URLlist:
+        dup = False
         html = getHtml(url)
         soup = BeautifulSoup(html, "html.parser")
         tag = soup.find('div',id='con')
@@ -155,18 +160,19 @@ def getContent2(URLlist):
             link = soup.find_all("a", text="Official Website")[0]['href']
 
         if record.keys() == []:
-            record[name] = eventStartDate
+            record[name.lower()] = eventStartDate
         else :
 
             for key in record.keys():
                 if (key.find(name.lower()) != -1 or name.lower().find(key)!= -1) and record[key] == eventStartDate:
                     print "duplicates!", name, eventStartDate
-                    continue
-                else:
-                    record[name.lower()] = eventStartDate
+                    dup = True
+                    break
 
+        if dup:
+            continue
 
-
+        record[name.lower()] = eventStartDate
         writer.writerow([name,eventVenue,eventCity,eventState,country,eventStartDate,eventEndDate,latitude,longitude,advanceRates,atDoorRates,link\
                          ,registerLink,eventDescription,eventType])
 
@@ -182,6 +188,8 @@ def fbget(type):
 
     while 'data' in hjson.keys():
         for x in hjson['data']:
+
+            dup = False
 
             if "place" not in x.keys() or "location" not in x["place"].keys() or "country" not in x["place"]["location"].keys():
                 continue
@@ -239,16 +247,19 @@ def fbget(type):
                 eventDescription = x["description"]
 
             if record.keys() == []:
-                record[name] = eventStartDate
+                record[name.lower()] = eventStartDate
             else :
 
                 for key in record.keys():
                     if (key.find(name.lower()) != -1 or name.lower().find(key)!= -1) and record[key] == eventStartDate:
                         print "duplicates!", name, eventStartDate
-                        continue
-                    else:
-                        record[name.lower()] = eventStartDate
+                        dup = True
+                        break
 
+            if dup:
+                continue
+
+            record[name.lower()] = eventStartDate
             writer.writerow([name,eventVenue,eventCity,eventState,country,eventStartDate,eventEndDate,latitude,longitude,advanceRates,atDoorRates,link\
                          ,registerLink,eventDescription,eventType])
 
@@ -286,3 +297,6 @@ getContent2(URLlist2)
 
 fbget("Anime")
 fbget("Comic")
+
+
+print record
