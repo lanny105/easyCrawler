@@ -1,6 +1,6 @@
 __author__ = 'apple'
 
-
+import json
 import csv
 import urllib2
 from bs4 import BeautifulSoup
@@ -171,6 +171,97 @@ def getContent2(URLlist):
                          ,registerLink,eventDescription,eventType])
 
 
+
+
+def fbget(type):
+
+    fbURL = 'https://graph.facebook.com/v2.6/search?q=' + type + '&type=event&center=34.0225483%2C-118.2832203&distance=100&access_token=EAACEdEose0cBAFyF4K09MRcsZAylGgkSwQiFlDSHp4dQqjFTtVTyC6R6StGKpID72shR3q5sOFajphpTA4KuO7xn2IARxjJtqnHdeX2e1WXlyYFHmwFXoEz41sJJZB3UWUZAqb6heoZCQMkE48ZAsiBfIFSQPkRkyBXKZAAcYp6AZDZD'
+    html3 = getHtml(fbURL)
+    hjson = json.loads(html3)
+
+
+    while 'data' in hjson.keys():
+        for x in hjson['data']:
+
+            if "place" not in x.keys() or "location" not in x["place"].keys() or "country" not in x["place"]["location"].keys():
+                continue
+
+            if x["place"]["location"]["country"] != "United States" and x["place"]["location"]["country"] != "Canada":
+                continue
+
+
+
+            name = ""
+            eventVenue = ""
+            eventCity = ""
+            eventState = ""
+            country = ""
+            eventStartDate = ""
+            eventEndDate = ""
+            latitude = ""
+            longitude =""
+            advanceRates = ""
+            atDoorRates = ""
+            link = ""
+            registerLink = ""
+            eventDescription = ""
+            eventType = type
+
+            if "name" in x.keys():
+                name = x["name"]
+
+            eventVenue = x["place"]["name"]
+
+            if "city" in x["place"]["location"].keys():
+                eventCity = x["place"]["location"]["city"]
+
+            if "state" in x["place"]["location"].keys():
+                eventState = x["place"]["location"]["state"]
+
+            if x["place"]["location"]["country"] == "United States":
+                country = "USA"
+            else:
+                country = "Canada"
+
+            if "start_time" in x.keys():
+                eventStartDate = x["start_time"][:10]
+
+            if "end_time" in x.keys():
+                eventEndDate = x["end_time"][:10]
+
+            if "latitude" in x["place"]["location"].keys():
+                latitude = x["place"]["location"]["latitude"]
+
+            if "longitude" in x["place"]["location"].keys():
+                longitude = x["place"]["location"]["longitude"]
+
+            if "description" in x.keys():
+                eventDescription = x["description"]
+
+            if record.keys() == []:
+                record[name] = eventStartDate
+            else :
+
+                for key in record.keys():
+                    if (key.find(name.lower()) != -1 or name.lower().find(key)!= -1) and record[key] == eventStartDate:
+                        print "duplicates!", name, eventStartDate
+                        continue
+                    else:
+                        record[name.lower()] = eventStartDate
+
+            writer.writerow([name,eventVenue,eventCity,eventState,country,eventStartDate,eventEndDate,latitude,longitude,advanceRates,atDoorRates,link\
+                         ,registerLink,eventDescription,eventType])
+
+
+        if 'paging' in hjson.keys():
+            fbURL = hjson['paging']['next']
+            html3 = getHtml(fbURL)
+            hjson = json.loads(html3)
+
+        else:
+            break
+
+
 writer = csv.writer(file('output.csv', 'w'))
 writer.writerow(['name', 'eventVenue', 'eventCity', 'eventState', 'eventCountry', 'eventStartDate', 'eventEndDate', 'latitude', 'longitude', \
         'advanceRates', 'atDoorRates', 'siteURL', 'registerURL', 'description', 'eventType'])
@@ -193,3 +284,5 @@ URLlist2 = getURL2(html2)
 getContent2(URLlist2)
 
 
+fbget("Anime")
+fbget("Comic")
