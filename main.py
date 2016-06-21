@@ -27,7 +27,7 @@ def getURL(html):
 
 def getContent(URLlist):
     eventType = "Anime"
-
+    source = "http://animecons.com/events/calendar.shtml/001800799"
     for url in URLlist:
         dup = False
         html = getHtml(url)
@@ -94,7 +94,7 @@ def getContent(URLlist):
 
         record[name.lower()] = eventStartDate
         writer.writerow([name,eventVenue,eventCity,eventState,country,eventStartDate,eventEndDate,latitude,longitude,advanceRates,atDoorRates,link\
-                         ,registerLink,eventDescription,eventType])
+                         ,registerLink,eventDescription,eventType,source])
 
 
 def getURL2(html):
@@ -110,7 +110,7 @@ def getURL2(html):
 
 def getContent2(URLlist):
     eventType = "Comic"
-
+    source = "http://www.upcomingcons.com/comic-conventions"
     for url in URLlist:
         dup = False
         html = getHtml(url)
@@ -156,6 +156,23 @@ def getContent2(URLlist):
             eventState = tag3.find_all('b',itemprop="addressRegion")[0].text.strip()
         country = "USA"
 
+        if len(eventState) != 2:
+            continue
+        GoogURL = "https://maps.googleapis.com/maps/api/geocode/json?address="+eventVenue.replace(" ","+")+',+' + eventCity.replace(" ","+")+',+'+eventState + "&key=AIzaSyDmGfpbkRd1K3hKM_fPRmTNB7MCIs1HUpk"
+        print GoogURL
+
+        ht = getHtml(GoogURL)
+        hjson = json.loads(ht)
+
+        if "results" in hjson.keys():
+            if "geometry" in hjson["results"][0].keys():
+                if "location" in hjson["results"][0]["geometry"].keys():
+                    if "lat" in hjson["results"][0]["geometry"]["location"].keys():
+                        latitude = hjson["results"][0]["geometry"]["location"]["lat"]
+                    if "lng" in hjson["results"][0]["geometry"]["location"].keys():
+                        longitude = hjson["results"][0]["geometry"]["location"]["lng"]
+
+
         if soup.find_all("a", text="Official Website")!=[]:
             link = soup.find_all("a", text="Official Website")[0]['href']
 
@@ -174,17 +191,17 @@ def getContent2(URLlist):
 
         record[name.lower()] = eventStartDate
         writer.writerow([name,eventVenue,eventCity,eventState,country,eventStartDate,eventEndDate,latitude,longitude,advanceRates,atDoorRates,link\
-                         ,registerLink,eventDescription,eventType])
+                         ,registerLink,eventDescription,eventType,source])
 
 
 
 
-def fbget(type):
-
-    fbURL = 'https://graph.facebook.com/v2.6/search?q=' + type + '&type=event&center=34.0225483%2C-118.2832203&distance=100&access_token=EAACEdEose0cBAFyF4K09MRcsZAylGgkSwQiFlDSHp4dQqjFTtVTyC6R6StGKpID72shR3q5sOFajphpTA4KuO7xn2IARxjJtqnHdeX2e1WXlyYFHmwFXoEz41sJJZB3UWUZAqb6heoZCQMkE48ZAsiBfIFSQPkRkyBXKZAAcYp6AZDZD'
+def fbget(type,token):
+    # token = 'EAACEdEose0cBANo854JYPNKiZCMIrmNGHyIn8vI6zsxyNHhKSCb8ImsSFZAo6CMNaK7xC7yI1oyopd1gDQuPIEZA8rBwZANA4EdeMgZB4YVjgqZCvPuUTNxXDyNyFJEfJ01DqnMthJXmZAHxkeBC5pzV0B0Y5w7YzeAEKFFjtxvHgZDZD'
+    fbURL = 'https://graph.facebook.com/v2.6/search?q=' + type + '&type=event&center=34.0225483%2C-118.2832203&distance=100&access_token=' + token
     html3 = getHtml(fbURL)
     hjson = json.loads(html3)
-
+    source = "facebook"
 
     while 'data' in hjson.keys():
         for x in hjson['data']:
@@ -261,7 +278,7 @@ def fbget(type):
 
             record[name.lower()] = eventStartDate
             writer.writerow([name,eventVenue,eventCity,eventState,country,eventStartDate,eventEndDate,latitude,longitude,advanceRates,atDoorRates,link\
-                         ,registerLink,eventDescription,eventType])
+                         ,registerLink,eventDescription,eventType,source])
 
 
         if 'paging' in hjson.keys():
@@ -273,9 +290,10 @@ def fbget(type):
             break
 
 
-writer = csv.writer(file('output.csv', 'w'))
+
+writer = csv.writer(file('test.csv', 'w'))
 writer.writerow(['name', 'eventVenue', 'eventCity', 'eventState', 'eventCountry', 'eventStartDate', 'eventEndDate', 'latitude', 'longitude', \
-        'advanceRates', 'atDoorRates', 'siteURL', 'registerURL', 'description', 'eventType'])
+        'advanceRates', 'atDoorRates', 'siteURL', 'registerURL', 'description', 'eventType','source'])
 
 
 record = {}
@@ -295,8 +313,8 @@ URLlist2 = getURL2(html2)
 getContent2(URLlist2)
 
 
-fbget("Anime")
-fbget("Comic")
 
 
-print record
+
+fbget("Anime",sys.argv[1])
+fbget("Comic",sys.argv[1])

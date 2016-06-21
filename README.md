@@ -10,3 +10,6 @@ finally writing result to csv file
 
 dependency: csv json BeautifulSoup
 
+remember every time get access token on https://developers.facebook.com/tools/explorer/ -- get access token
+
+then run python main.py your-access-token
